@@ -31,11 +31,14 @@ L'approche utilise : - **L'algorithme RAS** (Biproportion / Stone-Brown) pour l'
 ```text
 projet_TES/
 │
-├── 01_chargement_packages_chemins.R    # Étape 1 : Configuration
+├── 000_fonctions.R                      # Fonctions utilitaires
+├── 00_run_all.R                         # Script d'exécution complet
+├── 01_chargement_packages_chemins.R     # Étape 1 : Configuration
 ├── 02_chargement_retropolee.R           # Étape 2 : Chargement base rétropolée
 ├── 03_arbitrage_NB1_ND2.R               # Étape 3 : Fusion NB1/ND2
 ├── 04_cibles_et_TEI_ref.R               # Étape 4 : Cibles et TEI référence
-├── 05_export_TEI_input.R                # Étape 5 : Export pour RAS
+├── 05_0_RAS_TEI.R                       # Algorithme RAS
+├── 05_1_export_TEI_input.R              # Étape 5 : Export pour RAS
 ├── 06_chargement_TEI_RAS.R              # Étape 6 : Chargement TEI RAS
 ├── 07_calcul_CF.R                       # Étape 7 : Consommation finale
 ├── 08_matrice_ventilation.R             # Étape 8 : Matrice de ventilation
@@ -43,14 +46,6 @@ projet_TES/
 ├── 10_tableau_production.R              # Étape 10 : Tableau de production
 ├── 11_calcul_VA_et_composantes.R        # Étape 11 : Valeur ajoutée
 ├── 12_export_TES.R                      # Étape 12 : Export TES final
-│
-├── fonctions_modifie.R                  # Fonctions utilitaires
-├── RAS_TEI.R                           # Algorithme RAS
-├── run_all.R                           # Script d'exécution complet
-│
-├── TEI_input.xlsx                      # Fichier généré (entrée RAS)
-├── TEI_RAS_output.xlsx                 # Fichier généré (sortie RAS)
-├── TES_2016.xlsx                       # Fichier généré (TES final)
 │
 └── README.md                           # Ce fichier
 ```
