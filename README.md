@@ -140,6 +140,7 @@ v              v                             v
 ```
 ## Exécution du code
 
-Entrée les chemins qui mènent aux fichiers code dans 000_run_all.R et celui qui mène aux bases de données dans 01_chargement_packages_chemins.R
+Entrée les chemins qui mènent aux fichiers code dans 000_run_all.R et celui qui mène aux bases de données dans 01_chargement_packages_chemins.R.
+Exécuté tout le fichier 000_run_all.R, le TES sera enregistré à l'endroit où mène le chemin que vous avez saisi dans 01_chargement_packages_chemins.R.
 
 Notons que certains arbitrages ont été menés afin de garantir la conhérence des données obtenues concernant les comptes de Martinique entre 1996 et 2019. Ces arbitrages ne sont pas nécessairement adaptés à d'autres régions.
