@@ -62,6 +62,22 @@ projet_TES/
 ```r
 install.packages(c( "dplyr", "readxl", "tidyr", "writexl", "openxlsx" ))
 ```
+### Emplacement des bases de données
+Toutes les tables dont vous aurez besoin doivent se trouver dans unique dossier. Vous aurez besoin de:
+-  Une base rétropolée des comptes économiques qui contient : les identifiants des opérations, des produits, des branches, des attributs méthodologiques ; une colonne par année dont le contenu est un numérique.
+-  Un TEI de référence afin de calculer via RAS le TEI en prix de base.
+-  Un ERE de référence afin de calculer une clé de répartition entre consommation intermédiaire et consommation finale de la marge de commerce.
+
+## Exécution du code
+### Configuration
+1.  Entrez le chemin qui mène aux fichiers code dans 00_run_all.R ("chemin_fichier")
+2.  Entrez le chemin qui mène aux bases de données dans 01_chargement_packages_chemins.R ("chemin")
+
+### Lancement
+Exécutez tout le fichier 000_run_all.R, le TES sera enregistré à l'endroit où mène le chemin que vous avez saisi dans 01_chargement_packages_chemins.R.
+
+### Remarque importante
+Notons que certains arbitrages ont été menés afin de garantir la conhérence des données obtenues concernant les comptes de Martinique entre 1996 et 2019. Ces arbitrages ne sont pas nécessairement adaptés à d'autres régions.
 
 ## Flux de traitement du TES
 ```text
@@ -138,9 +154,3 @@ v              v                             v
 | Etape 12 : Export TES_final.xlsx       |
 +----------------------------------------+
 ```
-## Exécution du code
-
-Entrée les chemins qui mènent aux fichiers code dans 000_run_all.R et celui qui mène aux bases de données dans 01_chargement_packages_chemins.R.
-Exécuté tout le fichier 000_run_all.R, le TES sera enregistré à l'endroit où mène le chemin que vous avez saisi dans 01_chargement_packages_chemins.R.
-
-Notons que certains arbitrages ont été menés afin de garantir la conhérence des données obtenues concernant les comptes de Martinique entre 1996 et 2019. Ces arbitrages ne sont pas nécessairement adaptés à d'autres régions.
