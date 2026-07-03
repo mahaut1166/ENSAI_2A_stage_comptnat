@@ -59,7 +59,9 @@ projet_TES/
 
 ### Packages R nécessaires
 
-\`\`\`r install.packages(c( "dplyr", "readxl", "tidyr", "writexl", "openxlsx" ))
+```r
+install.packages(c( "dplyr", "readxl", "tidyr", "writexl", "openxlsx" ))
+```
 
 ## Flux de traitement du TES
 ```text
