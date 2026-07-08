@@ -39,7 +39,7 @@ charger_ere_cb <- function(Annee = annee_ref,
   
   # ====  AJOUT D'AUTRES ELEMENTS  ====
   if(attribut == "ERE"){
-    operations <- c("MT_._", "MC_._", "D21.1","D21.2","D21.4", "D31._", "P7_._")
+    operations <- c("MT_._", "MC_._", "D21.1","D21.2","D21.4", "D31._", "P6_._","P7_._")
   } else {
     operations <- c("D39._", "D29._")
   }
@@ -77,7 +77,7 @@ tableau_taux <- function(ere=ERE,
                          col_valeur = "valeur",
                          mc = "MC_._", tva = "D21.1") {
   
-  if(!taux %in% c("MC", "MT", "TVA", "TN","IMP")) {
+  if(!taux %in% c("MC", "MT", "TVA", "TN","IMP", "EXP")) {
     stop(paste("taux doit être 'MC', 'MT', 'TVA', 'IMP' ou 'TN'"))
   }
   
@@ -89,6 +89,8 @@ tableau_taux <- function(ere=ERE,
     valeur <- ere[["D21.1"]]
   } else if(taux == "IMP"){
     valeur <- ere[["P7_._"]]
+  } else if(taux == "EXP"){
+    valeur <- ere[["P6_._"]]
   }
   else if(taux == "TN") {
     # === TAXES NETTES = Somme des impôts - Somme des subventions ===
@@ -120,7 +122,7 @@ tableau_taux <- function(ere=ERE,
 }
 
 ######################################
-### CALCUL DE LA MARGE DE COMMERCE A RETIREE DU TEI PA
+### CALCUL DU TES (PB DOMESTIQUE)
 
 # --- 1. Préparation des matrices CI ---
 preparer_CI <- function(TEI_pa, col_secteur = "Secteur", exclure_produits = c("NZ1", "NZ2")) {
@@ -187,12 +189,27 @@ recuperer_taux <- function(Ere, exclure_produits = c("NZ1", "NZ2")) {
   TVA <- tableau_taux(taux = "TVA", ere = Ere)
   TN <- tableau_taux(taux = "TN", ere = Ere)
   IMP <- tableau_taux(taux = "IMP", ere = Ere)
+  EXP <- tableau_taux(taux = "EXP", ere = Ere)
   
   MC <- MC[!names(MC) %in% exclure_produits]
   TVA <- TVA[!names(TVA) %in% exclure_produits]
   TN <- TN[!names(TN) %in% exclure_produits]
   IMP <- IMP[!names(IMP) %in% exclure_produits]
-  return(list(MC = MC, TVA = TVA, TN = TN, IMP=IMP))
+  EXP <- EXP[!names(EXP) %in% exclure_produits]
+  
+  MC[["NP1"]] <- 0
+  TVA[["NP1"]] <- 0
+  TN[["NP1"]] <- 0
+  IMP[["NP1"]] <- 0
+  EXP[["NP1"]] <- 0
+  
+  MC <- MC[order(names(MC))]
+  TVA <- TVA[order(names(TVA))]
+  TN <- TN[order(names(TN))]
+  IMP <- IMP[order(names(IMP))]
+  EXP <- EXP[order(names(EXP))]
+  
+  return(list(MC = MC, TVA = TVA, TN = TN, IMP=IMP, EXP=EXP))
 }
 
 # --- 5. Calcul des taux de marge ---
@@ -377,20 +394,34 @@ calculer_TEI_PB <- function(TEI_pa,
 }
 
 # --- 9. Calcul de CF avec marges ---
+# Dans calculer_CF_PB, aligner les vecteurs de taxes
 calculer_CF_PB <- function(cf_filtre, MC_cf, TVA_cf, TN_cf, IMP_cf,
                            col_produit = "id_produit",
                            col_valeur = "CF",
                            exclure_produits = c("NZ1", "NZ2")) {
   
+  # Aligner les taxes avec les produits de CF
+  produits <- cf_filtre[[col_produit]]
+  
+  # Créer des vecteurs de taxes alignés
+  MC_align <- MC_cf[order(names(MC_cf))]
+  TVA_align <- TVA_cf[order(names(TVA_cf))]
+  TN_align <- TN_cf[order(names(TN_cf))]
+  IMP_align <- IMP_cf[order(names(IMP_cf))]
+
   CF_PB <- cf_filtre %>%
-    filter(!.data[[col_produit]] %in% exclure_produits) %>%
     mutate(
       CF_PB = .data[[col_valeur]] - 
-        coalesce(MC_cf[.data[[col_produit]]], 0) -
-        coalesce(TVA_cf[.data[[col_produit]]], 0) -
-        coalesce(TN_cf[.data[[col_produit]]], 0) - 
-        coalesce(IMP_cf[.data[[col_produit]]], 0)
+        MC_align[.data[[col_produit]]] -
+        TVA_align[.data[[col_produit]]] -
+        TN_align[.data[[col_produit]]] - 
+        IMP_align[.data[[col_produit]]]
     )
+  
+  CF_PB[CF_PB$id_produit == "NG1", "CF_PB"] <- sum(MC_cf, na.rm = TRUE)
+  
+  CF_PB <- CF_PB %>%
+    arrange(id_produit)
   
   return(CF_PB)
 }
@@ -462,14 +493,10 @@ calculer_TES_PB <- function(TEI_pa,
   # 4. Récupérer les taux
   taux_ERE <- recuperer_taux(Ere = ERe, exclure_produits)
   MC_ERE <- taux_ERE$MC
-  MC_ERE[["NP1"]] <- 0
   TVA_ERE <- taux_ERE$TVA
-  TVA_ERE[["NP1"]] <- 0
   TN_ERE <- taux_ERE$TN
-  TN_ERE[["NP1"]] <- 0
   IMP_ERE <- taux_ERE$IMP
-  IMP_ERE[["NP1"]] <- 0
-  
+
   # 5. Calculer les taux de marge
   taux <- calculer_taux_marge(ci_mat = CI_mat,
                               cf_par_produit = CF_par_produit,
@@ -510,12 +537,16 @@ calculer_TES_PB <- function(TEI_pa,
   TN_CF <- TN_ERE
   TVA_CF <- TVA_ERE
   IMP_CF <- IMP_ERE
+  TVA_CF <- TVA_CF[order(names(TVA_CF))]
+  TN_CF <- TN_CF[order(names(TN_CF))]
+  IMP_CF <- IMP_CF[order(names(IMP_CF))]
+  
   for(prod in produits_communs){
     TN_CF[prod] = TN_ERE[prod] * taux_CF[prod]
     TVA_CF[prod] = TVA_ERE[prod] * taux_CF[prod]
     IMP_CF[prod] = IMP_ERE[prod] * taux_CF[prod]
   }
-  CF_PB <- calculer_CF_PB(cf = CF_filtre,
+  CF_PB <- calculer_CF_PB(cf_filtre = CF_filtre,
                           MC_cf = marges$MC_CF,
                           TVA_cf = TVA_CF,
                           TN_cf = TN_CF,
@@ -547,17 +578,20 @@ calculer_TES_PB <- function(TEI_pa,
     taux_CF = taux_CF,
     cle_repartition = cle,
     marges = marges,
-    marge_CI_produit = marges$MC_CI,
-    marge_CF_produit = marges$MC_CF_,
+    TVA_CI = sweep(taux_CI, 1, TVA_ERE, "*"),
+    TN_Ci = sweep(taux_CI, 1, TN_ERE, "*"),
+    IMP_CI = sweep(taux_CI, 1, IMP_ERE, "*"),
+    TVA_CF = TVA_CF,
+    TN_CF = TN_CF,
+    IMP_CF = IMP_CF,
     ventilation_mat = ventilation_mat,
     verification = verif,
     produits_communs = produits_communs
   ))
 }
-
 ######################################
 ### EXPORTE LE TES
-exporter_TES <- function(CI, CF, VA, fichier = "export_r.xlsx") {
+exporter_TES <- function(CI, CF, VA, Production, fichier = "export_r.xlsx") {
   
   wb <- createWorkbook()
   addWorksheet(wb, "Tableau_r")
@@ -566,31 +600,144 @@ exporter_TES <- function(CI, CF, VA, fichier = "export_r.xlsx") {
   style_CI <- createStyle(fgFill = "#D6E4F0", border = "TopBottomLeftRight", borderColour = "#1F3864")
   style_CF <- createStyle(fgFill = "#E2EFDA", border = "TopBottomLeftRight", borderColour = "#2E75B6")
   style_VA <- createStyle(fgFill = "#FCE4D6", border = "TopBottomLeftRight", borderColour = "#7030A0")
+  style_Prod <- createStyle(fgFill = "#E8F4FD", border = "TopBottomLeftRight", borderColour = "#1F3864")
   style_titre <- createStyle(fontSize = 12, textDecoration = "bold", halign = "center")
   
-  # === 1. CI (en haut à gauche) ===
-  writeData(wb, "Tableau_r", CI, startRow = 2, startCol = 2)
-  addStyle(wb, "Tableau_r", style_CI, rows = 2:(2 + nrow(CI)), cols = 2:(2 + ncol(CI) - 1), gridExpand = TRUE)
+  # === PRÉPARATION DES TABLEAUX ===
   
-  # === 2. CF (en haut à droite) ===
-  decalage_col <- ncol(CI) + 3
-  writeData(wb, "Tableau_r", CF, startRow = 2, startCol = decalage_col)
-  addStyle(wb, "Tableau_r", style_CF, rows = 2:(2 + nrow(CF)), cols = decalage_col:(decalage_col + ncol(CF) - 1), gridExpand = TRUE)
+  # 1. TEI : garder toutes les colonnes
+  TEI_data <- CI
   
-  # === 3. VA (en bas à gauche, sous CI) ===
-  decalage_ligne <- nrow(CI) + 4
-  writeData(wb, "Tableau_r", VA, startRow = decalage_ligne, startCol = 2)
-  addStyle(wb, "Tableau_r", style_VA, rows = decalage_ligne:(decalage_ligne + nrow(VA) - 1), cols = 2:(2 + ncol(VA) - 1), gridExpand = TRUE)
+  # 2. CF : supprimer la colonne id_produit
+  CF_data <- CF
   
-  # Titres
-  writeData(wb, "Tableau_r", "CI", startRow = 1, startCol = 2)
-  writeData(wb, "Tableau_r", "CF", startRow = 1, startCol = decalage_col)
-  writeData(wb, "Tableau_r", "VA", startRow = decalage_ligne - 1, startCol = 2)
-  addStyle(wb, "Tableau_r", style_titre, rows = 1, cols = c(2, decalage_col), gridExpand = TRUE)
-  addStyle(wb, "Tableau_r", style_titre, rows = decalage_ligne - 1, cols = 2)
+  # 3. CT : supprimer la ligne "operation"
+  CT_data <- as.matrix(CT)
+  colnames(CT_data) <- NULL
   
-  # Ajuster les largeurs de colonnes
-  setColWidths(wb, "Tableau_r", cols = 1:(decalage_col + ncol(CF)), widths = 12)
+  # 4. Production
+  Prod_data <- Production 
+  
+  # === DISPOSITION ===
+  col_Prod <- 3
+  col_TEI <- ncol(Prod_data) + col_Prod
+  col_CF <- col_TEI + ncol(TEI_data)
+  row_TEI <- 2
+  row_CT <- nrow(TEI_data) + row_TEI +1
+  
+  # === 1. Production (à gauche) ===
+  writeData(wb, "Tableau_r", Prod_data, startRow = row_TEI, startCol = col_Prod)
+  addStyle(wb, "Tableau_r", style_Prod, 
+           rows = row_TEI:(row_TEI + nrow(Prod_data) - 1), 
+           cols = col_Prod:(col_Prod + ncol(Prod_data) - 1), 
+           gridExpand = TRUE)
+  writeData(wb, "Tableau_r", "Production", startRow = row_TEI - 1, startCol = col_Prod)
+  addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_Prod)
+  
+  # === 2. TEI (à droite de Production) ===
+  writeData(wb, "Tableau_r", TEI_data, startRow = row_TEI, startCol = col_TEI)
+  addStyle(wb, "Tableau_r", style_CI, 
+           rows = row_TEI:(row_TEI + nrow(TEI_data) - 1), 
+           cols = col_TEI:(col_TEI + ncol(TEI_data) - 1), 
+           gridExpand = TRUE)
+  writeData(wb, "Tableau_r", "TEI", startRow = row_TEI - 1, startCol = col_TEI)
+  addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_TEI)
+  
+  # === 3. CF (à droite de TEI) ===
+  writeData(wb, "Tableau_r", CF_data, startRow = row_TEI, startCol = col_CF)
+  addStyle(wb, "Tableau_r", style_CF, 
+           rows = row_TEI:(row_TEI + nrow(CF_data) - 1), 
+           cols = col_CF:(col_CF + ncol(CF_data) - 1), 
+           gridExpand = TRUE)
+  writeData(wb, "Tableau_r", "CF", startRow = row_TEI - 1, startCol = col_CF)
+  addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_CF)
+  
+  # === 4. CT (en dessous de TEI) ===
+  writeData(wb, "Tableau_r", CT_data, startRow = row_CT, startCol = col_TEI, colNames = FALSE, numFmt = "#,##0.00")
+  addStyle(wb, "Tableau_r", style_VA, 
+           rows = row_CT:(row_CT + nrow(CT_data) - 1), 
+           cols = col_TEI:(col_TEI + ncol(CT_data) - 1), 
+           gridExpand = TRUE)
+  
+  # === AJUSTER LES LARGEURS ===
+  setColWidths(wb, "Tableau_r", cols = 1:(col_CF + ncol(CF_data)), widths = 12)
+  
+  saveWorkbook(wb, fichier, overwrite = TRUE)
+  cat("Fichier exporté :", fichier, "\n")
+}
+
+######################################
+### EXPORTE LE TES technologie unique
+exporter_TES_tech <- function(CI, CF, VA, Production, fichier = "export_r.xlsx", technologie = technologie_unique) {
+  
+  wb <- createWorkbook()
+  addWorksheet(wb, "Tableau_r")
+  
+  # Définir les couleurs
+  style_CI <- createStyle(fgFill = "#D6E4F0", border = "TopBottomLeftRight", borderColour = "#1F3864")
+  style_CF <- createStyle(fgFill = "#E2EFDA", border = "TopBottomLeftRight", borderColour = "#2E75B6")
+  style_VA <- createStyle(fgFill = "#FCE4D6", border = "TopBottomLeftRight", borderColour = "#7030A0")
+  style_Prod <- createStyle(fgFill = "#E8F4FD", border = "TopBottomLeftRight", borderColour = "#1F3864")
+  style_titre <- createStyle(fontSize = 12, textDecoration = "bold", halign = "center")
+  
+  # === PRÉPARATION DES TABLEAUX ===
+  
+  # 1. TEI : garder toutes les colonnes
+  TEI_data <- CI
+  
+  # 2. CF : supprimer la colonne id_produit
+  CF_data <- CF
+  
+  # 3. CT : supprimer la ligne "operation"
+  CT_data <- as.matrix(CT)
+  colnames(CT_data) <- NULL
+  
+  # 4. Production
+  Prod_data <- Production 
+  
+  # === DISPOSITION ===
+  col_Prod <- 3
+  col_TEI <- ncol(Prod_data) + col_Prod
+  col_CF <- col_TEI + ncol(TEI_data)
+  row_TEI <- 2
+  row_CT <- nrow(TEI_data) + row_TEI +1
+  
+  # === 1. Production (à gauche) ===
+  writeData(wb, "Tableau_r", Prod_data, startRow = row_TEI, startCol = col_Prod)
+  addStyle(wb, "Tableau_r", style_Prod, 
+           rows = row_TEI:(row_TEI + nrow(Prod_data) - 1), 
+           cols = col_Prod:(col_Prod + ncol(Prod_data) - 1), 
+           gridExpand = TRUE)
+  writeData(wb, "Tableau_r", paste("Production, technologie", technologie), startRow = row_TEI - 1, startCol = col_Prod)
+  addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_Prod)
+  
+  # === 2. TEI (à droite de Production) ===
+  writeData(wb, "Tableau_r", TEI_data, startRow = row_TEI, startCol = col_TEI)
+  addStyle(wb, "Tableau_r", style_CI, 
+           rows = row_TEI:(row_TEI + nrow(TEI_data) - 1), 
+           cols = col_TEI:(col_TEI + ncol(TEI_data) - 1), 
+           gridExpand = TRUE)
+  writeData(wb, "Tableau_r", "TEI", startRow = row_TEI - 1, startCol = col_TEI)
+  addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_TEI)
+  
+  # === 3. CF (à droite de TEI) ===
+  writeData(wb, "Tableau_r", CF_data, startRow = row_TEI, startCol = col_CF)
+  addStyle(wb, "Tableau_r", style_CF, 
+           rows = row_TEI:(row_TEI + nrow(CF_data) - 1), 
+           cols = col_CF:(col_CF + ncol(CF_data) - 1), 
+           gridExpand = TRUE)
+  writeData(wb, "Tableau_r", "CF", startRow = row_TEI - 1, startCol = col_CF)
+  addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_CF)
+  
+  # === 4. CT (en dessous de TEI) ===
+  writeData(wb, "Tableau_r", CT_data, startRow = row_CT, startCol = col_TEI, colNames = FALSE, numFmt = "#,##0.00")
+  addStyle(wb, "Tableau_r", style_VA, 
+           rows = row_CT:(row_CT + nrow(CT_data) - 1), 
+           cols = col_TEI:(col_TEI + ncol(CT_data) - 1), 
+           gridExpand = TRUE)
+  
+  # === AJUSTER LES LARGEURS ===
+  setColWidths(wb, "Tableau_r", cols = 1:(col_CF + ncol(CF_data)), widths = 12)
   
   saveWorkbook(wb, fichier, overwrite = TRUE)
   cat("Fichier exporté :", fichier, "\n")

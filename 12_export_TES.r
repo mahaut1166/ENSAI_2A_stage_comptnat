@@ -14,8 +14,9 @@ cat("  > Export du TES...\n")
 
 exporter_TES(
   CI = TEI_PB_dom,
-  CF = CF,
+  CF = CF_PB,
   VA = CT,
+  Production = Production,
   fichier = paste0("TES_", annee_ref, ".xlsx")
 )
 

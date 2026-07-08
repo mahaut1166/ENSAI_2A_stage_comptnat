@@ -35,15 +35,11 @@ cat("  > CF calculée pour", nrow(CF), "produits\n")
 cat("  > Ajout des produits manquants (NG1, NA4)...\n")
 
 CF <- CF %>%
-  add_row(id_produit = "NG1", !!!setNames(as.list(rep(0, ncol(CF) - 1)), names(CF)[-1])) %>%
+  add_row(id_produit = "NG1", CF = 0, FBCF = 0) %>%
   add_row(id_produit = "NA4", !!!setNames(as.list(rep(0, ncol(CF) - 1)), names(CF)[-1])) %>%
-  bind_rows(
-    data.frame(
-      id_produit = "Total branche",
-      t(colSums(CF[, -1], na.rm = TRUE))
-    )
-  ) %>%
   arrange(id_produit)
 
 cat("  > CF dimensions finales :", nrow(CF), "x", ncol(CF), "\n")
 cat("  > CF totale (somme) :", sum(CF[CF$id_produit != "Total branche", "CF"], na.rm = TRUE), "\n\n")
+
+

@@ -30,10 +30,9 @@ res_PB$taux_ERE$TVA["NP1"] <- 0
 res_PB$taux_ERE$TN["NP1"] <- 0
 res_PB$taux_ERE$IMP["NP1"] <- 0
 
-# Calcul des impôts sur la CI
-TVA_CI <- res_PB$taux_ERE$TVA * res_PB$taux_CI
-TN_CI <- res_PB$taux_ERE$TN * res_PB$taux_CI
-IMP_CI <- res_PB$taux_ERE$IMP * res_PB$taux_CI
+TVA_CI <- res_PB$TVA_CI
+TN_CI <- res_PB$TN_Ci
+IMP_CI <- res_PB$IMP_CI
 
 # Aggrégation par branche
 TVA <- colSums(TVA_CI, na.rm = TRUE)
@@ -45,16 +44,25 @@ names(TN) <- colnames(TN_CI)
 IMP <- colSums(IMP_CI, na.rm = TRUE)
 names(IMP) <- colnames(IMP_CI)
 
+TEI_PB_col <- TEI_PB[TEI_PB$Secteur == "Total colonnes",-c(1,ncol(TEI_PB))]
+TEI_PA_col <- colSums(TEI_PA[,-1], na.rm=T)
+
 cat("  > TVA totale :", sum(TVA, na.rm = TRUE), "\n")
 cat("  > TN totale :", sum(TN, na.rm = TRUE), "\n")
 cat("  > IMP totale :", sum(IMP, na.rm = TRUE), "\n")
 
 # ---- 11.3 Assemblage du tableau des composantes ----
-CT <- rbind(va, TVA, TN, IMP, tei_tot_branche)
-CT <- as.data.frame(CT) %>%
+CT <- rbind(IMP) %>%
+  rbind(TEI_PB_col) %>%
+  rbind(TVA) %>%
+  rbind(TN) %>%
+  rbind(TEI_PA_col)%>%
+  rbind(va)%>%
   mutate(
-    operation = c("VA", "TVA", "TN", "IMP", "Total prix d'acquisition")
-  ) %>%
-  relocate(operation, .before = 1)
+    operation = c("IMP", "CI PB", "TVA", "TN", "CI PA", "VA")
+  )%>%
+  relocate(operation, .before = everything())
+CT <- CT %>%
+  mutate(Total_ligne = rowSums(CT[,-1]))
 
 cat("  > Composantes assemblées :", nrow(CT), "lignes\n\n")
