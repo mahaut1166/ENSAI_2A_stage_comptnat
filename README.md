@@ -31,11 +31,14 @@ L'approche utilise : - **L'algorithme RAS** (Biproportion / Stone-Brown) pour l'
 ```text
 projet_TES/
 │
-├── 01_chargement_packages_chemins.R    # Étape 1 : Configuration
+├── 000_fonctions.R                      # Fonctions utilitaires
+├── 00_run_all.R                         # Script d'exécution complet
+├── 01_chargement_packages_chemins.R     # Étape 1 : Configuration
 ├── 02_chargement_retropolee.R           # Étape 2 : Chargement base rétropolée
 ├── 03_arbitrage_NB1_ND2.R               # Étape 3 : Fusion NB1/ND2
 ├── 04_cibles_et_TEI_ref.R               # Étape 4 : Cibles et TEI référence
-├── 05_export_TEI_input.R                # Étape 5 : Export pour RAS
+├── 05_0_RAS_TEI.R                       # Algorithme RAS
+├── 05_1_export_TEI_input.R              # Étape 5 : Export pour RAS
 ├── 06_chargement_TEI_RAS.R              # Étape 6 : Chargement TEI RAS
 ├── 07_calcul_CF.R                       # Étape 7 : Consommation finale
 ├── 08_matrice_ventilation.R             # Étape 8 : Matrice de ventilation
@@ -43,14 +46,6 @@ projet_TES/
 ├── 10_tableau_production.R              # Étape 10 : Tableau de production
 ├── 11_calcul_VA_et_composantes.R        # Étape 11 : Valeur ajoutée
 ├── 12_export_TES.R                      # Étape 12 : Export TES final
-│
-├── fonctions_modifie.R                  # Fonctions utilitaires
-├── RAS_TEI.R                           # Algorithme RAS
-├── run_all.R                           # Script d'exécution complet
-│
-├── TEI_input.xlsx                      # Fichier généré (entrée RAS)
-├── TEI_RAS_output.xlsx                 # Fichier généré (sortie RAS)
-├── TES_2016.xlsx                       # Fichier généré (TES final)
 │
 └── README.md                           # Ce fichier
 ```
@@ -64,7 +59,25 @@ projet_TES/
 
 ### Packages R nécessaires
 
-\`\`\`r install.packages(c( "dplyr", "readxl", "tidyr", "writexl", "openxlsx" ))
+```r
+install.packages(c( "dplyr", "readxl", "tidyr", "writexl", "openxlsx" ))
+```
+### Emplacement des bases de données
+Toutes les tables dont vous aurez besoin doivent se trouver dans unique dossier. Vous aurez besoin de:
+-  Une base rétropolée des comptes économiques qui contient : les identifiants des opérations, des produits, des branches, des attributs méthodologiques ; une colonne par année dont le contenu est un numérique.
+-  Un TEI de référence afin de calculer via RAS le TEI en prix de base.
+-  Un ERE de référence afin de calculer une clé de répartition entre consommation intermédiaire et consommation finale de la marge de commerce.
+
+## Exécution du code
+### Configuration
+1.  Entrez le chemin qui mène aux fichiers code dans 00_run_all.R ("chemin_fichier")
+2.  Entrez le chemin qui mène aux bases de données dans 01_chargement_packages_chemins.R ("chemin")
+
+### Lancement
+Exécutez tout le fichier 000_run_all.R, le TES sera enregistré à l'endroit où mène le chemin que vous avez saisi dans 01_chargement_packages_chemins.R.
+
+### Remarque importante
+Notons que certains arbitrages ont été menés afin de garantir la conhérence des données obtenues concernant les comptes de Martinique entre 1996 et 2019. Ces arbitrages ne sont pas nécessairement adaptés à d'autres régions.
 
 ## Flux de traitement du TES
 ```text
@@ -141,8 +154,3 @@ v              v                             v
 | Etape 12 : Export TES_final.xlsx       |
 +----------------------------------------+
 ```
-## Exécution du code
-
-Entrée les chemins qui mènent aux fichiers code dans 000_run_all.R et celui qui mène aux bases de données dans 01_chargement_packages_chemins.R
-
-Notons que certains arbitrages ont été menés afin de garantir la conhérence des données obtenues concernant les comptes de Martinique entre 1996 et 2019. Ces arbitrages ne sont pas nécessairement adaptés à d'autres régions.
