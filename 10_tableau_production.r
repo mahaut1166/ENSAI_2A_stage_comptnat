@@ -51,3 +51,18 @@ if (abs(verif_prod) < 1) {
 }
 
 cat("\n")
+
+Subv_impot <- ERE %>%
+  select(id_produit, D21.1,D21.2, D21.4, D31._)%>%
+  filter(!id_produit %in% c("NZ1", "NZ2"))
+Subv_impot <- Subv_impot %>%
+  add_row(id_produit ="NP1",
+          !!!setNames(
+            rep(0, ncol(Subv_impot)-1),
+            colnames(Subv_impot[,-1])
+          ))%>%
+  arrange(id_produit)%>%
+  add_row(id_produit = "Total colonne", !!!setNames(colSums(Subv_impot[,-1], na.rm=T),colnames(Subv_impot[,-1])))
+Subv_impot <- Subv_impot %>%
+  mutate(Total = rowSums(Subv_impot[,-1], na.rm=T) + Production$Total_produit)
+

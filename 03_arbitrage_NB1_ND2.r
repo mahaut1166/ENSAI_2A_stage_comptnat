@@ -25,9 +25,18 @@ retro_NB1_ND2_produit <- retro %>%
   summarise(across(all_of(cols_numeriques), ~ sum(.x, na.rm = TRUE)), .groups = "drop") %>%
   mutate(id_produit = "NB1+ND2")
 
+retro_NB1_ND2_both <- retro %>%
+  filter(id_branche == "NB1" | id_branche == "ND2") %>%
+  filter(id_produit == "NB1" | id_produit == "ND2") %>%
+  group_by(id_operation, id_attrib_methode) %>%
+  summarise(across(all_of(cols_numeriques), ~ sum(.x, na.rm = TRUE)), .groups = "drop") %>%
+  mutate(id_produit = "NB1+ND2",
+         id_branche = "NB1+ND2")
+
 # ---- 3.3 Assemblage final ----
 retro <- bind_rows(retro, retro_NB1_ND2_branche) %>%
   bind_rows(retro_NB1_ND2_produit) %>%
+  bind_rows(retro_NB1_ND2_both) %>%
   filter(!id_branche %in% c("NB1", "ND2")) %>%
   filter(!id_produit %in% c("NB1", "ND2")) %>%
   arrange(id_branche, id_produit, id_operation, id_attrib_methode)

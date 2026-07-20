@@ -591,7 +591,8 @@ calculer_TES_PB <- function(TEI_pa,
 }
 ######################################
 ### EXPORTE LE TES
-exporter_TES <- function(CI, CF, VA, Production, fichier = "export_r.xlsx") {
+exporter_TES <- function(CI, CF, VA, Production, sbv_imp,
+                         fichier = "export_r.xlsx") {
   
   wb <- createWorkbook()
   addWorksheet(wb, "Tableau_r")
@@ -618,9 +619,12 @@ exporter_TES <- function(CI, CF, VA, Production, fichier = "export_r.xlsx") {
   # 4. Production
   Prod_data <- Production 
   
+  sbv_imp <- sbv_imp 
+  
   # === DISPOSITION ===
-  col_Prod <- 3
-  col_TEI <- ncol(Prod_data) + col_Prod
+  col_Prod <- 2
+  col_subv_imp <- ncol(Prod_data) + col_Prod
+  col_TEI <- ncol(sbv_imp) + col_subv_imp
   col_CF <- col_TEI + ncol(TEI_data)
   row_TEI <- 2
   row_CT <- nrow(TEI_data) + row_TEI +1
@@ -628,34 +632,41 @@ exporter_TES <- function(CI, CF, VA, Production, fichier = "export_r.xlsx") {
   # === 1. Production (à gauche) ===
   writeData(wb, "Tableau_r", Prod_data, startRow = row_TEI, startCol = col_Prod)
   addStyle(wb, "Tableau_r", style_Prod, 
-           rows = row_TEI:(row_TEI + nrow(Prod_data) - 1), 
+           rows = row_TEI:(row_TEI + nrow(Prod_data)), 
            cols = col_Prod:(col_Prod + ncol(Prod_data) - 1), 
            gridExpand = TRUE)
   writeData(wb, "Tableau_r", "Production", startRow = row_TEI - 1, startCol = col_Prod)
   addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_Prod)
   
-  # === 2. TEI (à droite de Production) ===
+  # === 2. Suvention et impôts (à droite de Production) ===
+  writeData(wb, "Tableau_r", sbv_imp, startRow = row_TEI, startCol = col_subv_imp)
+  addStyle(wb, "Tableau_r", style_Prod, 
+           rows = row_TEI:(row_TEI + nrow(sbv_imp)), 
+           cols = col_TEI:(col_TEI + ncol(sbv_imp) - 1), 
+           gridExpand = TRUE)
+  
+  # === 3. TEI (à droite de Production) ===
   writeData(wb, "Tableau_r", TEI_data, startRow = row_TEI, startCol = col_TEI)
   addStyle(wb, "Tableau_r", style_CI, 
-           rows = row_TEI:(row_TEI + nrow(TEI_data) - 1), 
+           rows = row_TEI:(row_TEI + nrow(TEI_data)), 
            cols = col_TEI:(col_TEI + ncol(TEI_data) - 1), 
            gridExpand = TRUE)
   writeData(wb, "Tableau_r", "TEI", startRow = row_TEI - 1, startCol = col_TEI)
   addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_TEI)
   
-  # === 3. CF (à droite de TEI) ===
+  # === 4. CF (à droite de TEI) ===
   writeData(wb, "Tableau_r", CF_data, startRow = row_TEI, startCol = col_CF)
   addStyle(wb, "Tableau_r", style_CF, 
-           rows = row_TEI:(row_TEI + nrow(CF_data) - 1), 
+           rows = row_TEI:(row_TEI + nrow(CF_data)), 
            cols = col_CF:(col_CF + ncol(CF_data) - 1), 
            gridExpand = TRUE)
   writeData(wb, "Tableau_r", "CF", startRow = row_TEI - 1, startCol = col_CF)
   addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_CF)
   
-  # === 4. CT (en dessous de TEI) ===
-  writeData(wb, "Tableau_r", CT_data, startRow = row_CT, startCol = col_TEI, colNames = FALSE, numFmt = "#,##0.00")
+  # === 5. CT (en dessous de TEI) ===
+  writeData(wb, "Tableau_r", CT_data, startRow = row_CT, startCol = col_TEI, colNames = FALSE)
   addStyle(wb, "Tableau_r", style_VA, 
-           rows = row_CT:(row_CT + nrow(CT_data) - 1), 
+           rows = row_CT:(row_CT + nrow(CT_data)), 
            cols = col_TEI:(col_TEI + ncol(CT_data) - 1), 
            gridExpand = TRUE)
   
@@ -668,7 +679,7 @@ exporter_TES <- function(CI, CF, VA, Production, fichier = "export_r.xlsx") {
 
 ######################################
 ### EXPORTE LE TES technologie unique
-exporter_TES_tech <- function(CI, CF, VA, Production, fichier = "export_r.xlsx", technologie = technologie_unique) {
+exporter_TES_tech <- function(ci, cf, va, production, fichier = "export_r.xlsx", technologie = technologie_unique) {
   
   wb <- createWorkbook()
   addWorksheet(wb, "Tableau_r")
@@ -676,24 +687,24 @@ exporter_TES_tech <- function(CI, CF, VA, Production, fichier = "export_r.xlsx",
   # Définir les couleurs
   style_CI <- createStyle(fgFill = "#D6E4F0", border = "TopBottomLeftRight", borderColour = "#1F3864")
   style_CF <- createStyle(fgFill = "#E2EFDA", border = "TopBottomLeftRight", borderColour = "#2E75B6")
-  style_VA <- createStyle(fgFill = "#FCE4D6", border = "TopBottomLeftRight", borderColour = "#7030A0")
+  style_VA <- createStyle(fgFill = "#FCE4D6", border = "TopBottomLeftRight", borderColour = "#7030A0", numFmt = "#,##0.00")
   style_Prod <- createStyle(fgFill = "#E8F4FD", border = "TopBottomLeftRight", borderColour = "#1F3864")
   style_titre <- createStyle(fontSize = 12, textDecoration = "bold", halign = "center")
   
   # === PRÉPARATION DES TABLEAUX ===
   
   # 1. TEI : garder toutes les colonnes
-  TEI_data <- CI
+  TEI_data <- ci
   
   # 2. CF : supprimer la colonne id_produit
-  CF_data <- CF
+  CF_data <- cf
   
   # 3. CT : supprimer la ligne "operation"
-  CT_data <- as.matrix(CT)
+  CT_data <- as.matrix(va)
   colnames(CT_data) <- NULL
   
   # 4. Production
-  Prod_data <- Production 
+  Prod_data <- production 
   
   # === DISPOSITION ===
   col_Prod <- 3
@@ -730,7 +741,7 @@ exporter_TES_tech <- function(CI, CF, VA, Production, fichier = "export_r.xlsx",
   addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_CF)
   
   # === 4. CT (en dessous de TEI) ===
-  writeData(wb, "Tableau_r", CT_data, startRow = row_CT, startCol = col_TEI, colNames = FALSE, numFmt = "#,##0.00")
+  writeData(wb, "Tableau_r", CT_data, startRow = row_CT, startCol = col_TEI, colNames = FALSE)
   addStyle(wb, "Tableau_r", style_VA, 
            rows = row_CT:(row_CT + nrow(CT_data) - 1), 
            cols = col_TEI:(col_TEI + ncol(CT_data) - 1), 
