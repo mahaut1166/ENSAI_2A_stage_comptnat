@@ -18,5 +18,13 @@ source(paste0(chemin_fichier,"10_tableau_production.R"))
 source(paste0(chemin_fichier,"11_calcul_VA_et_composantes.R"))
 source(paste0(chemin_fichier,"12_export_TES.R"))
 
+###################################################
+## ARBITRAGE TES 
+# Mettre le tableau arbitré dans sheet2 et au même emplacement
+# que le TES originel
+##################################################
+
 # Version technologie unique
 source(paste0(chemin_fichier,"13_Technologie_unique.R"))
+source(paste0(chemin_fichier,"14_Detailler_VA.R"))
+

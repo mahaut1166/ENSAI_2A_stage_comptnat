@@ -23,7 +23,7 @@ library(tibble)
 # ---- 1.2 Configuration des chemins ----
 chemin <- "Z:/Pacte_de_responsabilite/Pacte_responsabilite/propre/base/"
 setwd(chemin)
-annee_ref <- 2016
+annee_ref <- 2017
 technologie_unique = "branche"
 
 cat("  > Année de référence :", annee_ref, "\n")

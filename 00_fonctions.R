@@ -591,7 +591,7 @@ calculer_TES_PB <- function(TEI_pa,
 }
 ######################################
 ### EXPORTE LE TES
-exporter_TES <- function(CI, CF, VA, Production, sbv_imp,
+exporter_TES <- function(CI, CF, VA, Production,
                          fichier = "export_r.xlsx") {
   
   wb <- createWorkbook()
@@ -619,12 +619,9 @@ exporter_TES <- function(CI, CF, VA, Production, sbv_imp,
   # 4. Production
   Prod_data <- Production 
   
-  sbv_imp <- sbv_imp 
-  
   # === DISPOSITION ===
   col_Prod <- 2
-  col_subv_imp <- ncol(Prod_data) + col_Prod
-  col_TEI <- ncol(sbv_imp) + col_subv_imp
+  col_TEI <- ncol(Prod_data) + col_Prod
   col_CF <- col_TEI + ncol(TEI_data)
   row_TEI <- 2
   row_CT <- nrow(TEI_data) + row_TEI +1
@@ -638,14 +635,7 @@ exporter_TES <- function(CI, CF, VA, Production, sbv_imp,
   writeData(wb, "Tableau_r", "Production", startRow = row_TEI - 1, startCol = col_Prod)
   addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_Prod)
   
-  # === 2. Suvention et impôts (à droite de Production) ===
-  writeData(wb, "Tableau_r", sbv_imp, startRow = row_TEI, startCol = col_subv_imp)
-  addStyle(wb, "Tableau_r", style_Prod, 
-           rows = row_TEI:(row_TEI + nrow(sbv_imp)), 
-           cols = col_TEI:(col_TEI + ncol(sbv_imp) - 1), 
-           gridExpand = TRUE)
-  
-  # === 3. TEI (à droite de Production) ===
+  # === 2. TEI (à droite de Production) ===
   writeData(wb, "Tableau_r", TEI_data, startRow = row_TEI, startCol = col_TEI)
   addStyle(wb, "Tableau_r", style_CI, 
            rows = row_TEI:(row_TEI + nrow(TEI_data)), 
@@ -654,7 +644,7 @@ exporter_TES <- function(CI, CF, VA, Production, sbv_imp,
   writeData(wb, "Tableau_r", "TEI", startRow = row_TEI - 1, startCol = col_TEI)
   addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_TEI)
   
-  # === 4. CF (à droite de TEI) ===
+  # === 3. CF (à droite de TEI) ===
   writeData(wb, "Tableau_r", CF_data, startRow = row_TEI, startCol = col_CF)
   addStyle(wb, "Tableau_r", style_CF, 
            rows = row_TEI:(row_TEI + nrow(CF_data)), 
@@ -663,7 +653,7 @@ exporter_TES <- function(CI, CF, VA, Production, sbv_imp,
   writeData(wb, "Tableau_r", "CF", startRow = row_TEI - 1, startCol = col_CF)
   addStyle(wb, "Tableau_r", style_titre, rows = row_TEI - 1, cols = col_CF)
   
-  # === 5. CT (en dessous de TEI) ===
+  # === 4. CT (en dessous de TEI) ===
   writeData(wb, "Tableau_r", CT_data, startRow = row_CT, startCol = col_TEI, colNames = FALSE)
   addStyle(wb, "Tableau_r", style_VA, 
            rows = row_CT:(row_CT + nrow(CT_data)), 

@@ -17,7 +17,6 @@ exporter_TES(
   CF = CF_PB,
   VA = CT,
   Production = Production,
-  sbv_imp = Subv_impot,
   fichier = paste0("TES_", annee_ref, ".xlsx")
 )
 

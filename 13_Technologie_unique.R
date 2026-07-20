@@ -5,24 +5,24 @@
 # Objectif : Appliquer les calculs du manuel de STATEC
 # ==============================================================
 
-TES_arbitr <- read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2)
-id_produit <- read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2, range = "B2:B25")
+TES_arbitr <- read_excel(paste0(chemin,"TES_",annee_ref,".xlsx"), sheet = 2)
+id_produit <- read_excel(paste0(chemin,"TES_",annee_ref,".xlsx"), sheet = 2, range = "B2:B25")
 
-V <- as.matrix(read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2, range = "C2:Y25"))
+V <- as.matrix(read_excel(paste0(chemin,"TES_",annee_ref,".xlsx"), sheet = 2, range = "C2:Y25"))
 row.names(V) <- unlist(id_produit)
 
 
-g <- as.numeric(read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2, range = "C25:Y26"))
+g <- as.numeric(read_excel(paste0(chemin,"TES_",annee_ref,".xlsx"), sheet = 2, range = "C25:Y26"))
 names(g) <- unlist(id_produit)
 
 
-q <- as.numeric(unlist(read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2, range = "Z2:Z25")))
+q <- as.numeric(unlist(read_excel(paste0(chemin,"TES_",annee_ref,".xlsx"), sheet = 2, range = "Z2:Z25")))
 names(q) <- unlist(id_produit)
 
 
-Y <- as.matrix(read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2, range = "AB26:AX32"))
+Y <- as.matrix(read_excel(paste0(chemin,"TES_",annee_ref,".xlsx"), sheet = 2, range = "AB26:AX32"))
 colnames(Y) <- unlist(id_produit)
-row.names(Y) <- unlist(read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2, range = "AA26:AA32"))
+row.names(Y) <- unlist(read_excel(paste0(chemin,"TES_",annee_ref,".xlsx"), sheet = 2, range = "AA26:AA32"))
 
 Y <- CT %>%
   filter(operation %in% c("IMP", "TVA", "TN", "VA"))%>%
@@ -31,7 +31,7 @@ Y <- CT %>%
 colnames(Y) <- unlist(id_produit)
 row.names(Y) <- c("IMP", "TVA", "TN", "VA")
 
-U <- as.matrix(read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2, range = "AB2:AX25"))
+U <- as.matrix(read_excel(paste0(chemin,"TES_",annee_ref,".xlsx"), sheet = 2, range = "AB2:AX25"))
 row.names(U) <- unlist(id_produit)
 
 
@@ -117,12 +117,3 @@ VA_tech$ordre <- factor(VA_tech$operation, levels = c(
 VA_tech <- VA_tech %>%
   arrange(ordre) %>%
   select(-ordre)
-
-# Exportrer
-exporter_TES_tech(
-  ci = CI_tech,
-  cf =  read_excel(paste0(chemin,"TES_2016.xlsx"), sheet = 2, range = "AZ2:BC31"),
-  va = VA_tech,
-  production = Production_diago,
-  fichier = paste0("TES_tech_", annee_ref, ".xlsx")
-)
